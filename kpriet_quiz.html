@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KPRIET LLM Quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 8px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .question-container {
+            margin-bottom: 30px;
+        }
+
+        .question-number {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .question-text {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            font-size: 1em;
+            text-align: left;
+        }
+
+        .option:hover:not(.option.answered) {
+            border-color: #667eea;
+            background: #f5f5ff;
+        }
+
+        .option.selected:not(.answered) {
+            border-color: #667eea;
+            background: #f5f5ff;
+            border-width: 2px;
+        }
+
+        .option.answered {
+            cursor: not-allowed;
+        }
+
+        .option.correct {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .option.incorrect {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .option.correct::after {
+            content: " ✓";
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .option.incorrect::after {
+            content: " ✗";
+            font-weight: bold;
+            color: #dc3545;
+        }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .feedback.show {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .feedback.correct {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            color: #155724;
+        }
+
+        .feedback.incorrect {
+            background: #f8d7da;
+            border: 1px solid #dc3545;
+            color: #721c24;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-next {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-next:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-reset {
+            background: #6c757d;
+            color: white;
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .btn-reset:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .stats {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .stats.show {
+            display: block;
+        }
+
+        .stats h2 {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .score {
+            font-size: 3em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 20px 0;
+        }
+
+        .score-text {
+            font-size: 1.1em;
+            color: #666;
+        }
+
+        .part-indicator {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+        }
+
+        .leaderboard-btn {
+            background: #28a745;
+            color: white;
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .leaderboard-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .leaderboard {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .leaderboard.show {
+            display: block;
+        }
+
+        .leaderboard h3 {
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .leaderboard-list {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .leaderboard-list li {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .leaderboard-list li .rank {
+            font-weight: bold;
+            color: #667eea;
+            min-width: 30px;
+            margin-right: 10px;
+        }
+
+        .leaderboard-list li .name-info {
+            flex: 1;
+        }
+
+        .leaderboard-list li .name-info strong {
+            display: block;
+        }
+
+        .leaderboard-list li .name-info small {
+            color: #999;
+        }
+
+        .leaderboard-list li .score-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .input-name {
+            margin-bottom: 20px;
+        }
+
+        .input-name input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        .input-name input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-name label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 KPRIET LLM Quiz</h1>
+            <p>Test your knowledge on Language Models and Prompt Engineering</p>
+        </div>
+
+        <div class="input-name" id="nameInput">
+            <label for="participantName">Enter your name:</label>
+            <input type="text" id="participantName" placeholder="Your name here..." autocomplete="off">
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div id="quizContent">
+            <!-- Quiz questions will be inserted here -->
+        </div>
+
+        <div class="stats" id="stats">
+            <h2>Quiz Complete! 🎉</h2>
+            <div class="score" id="finalScore"></div>
+            <div class="score-text" id="scoreText"></div>
+        </div>
+
+        <div class="leaderboard" id="leaderboard">
+            <h3>📊 Leaderboard</h3>
+            <ul class="leaderboard-list" id="leaderboardList"></ul>
+        </div>
+
+        <div class="button-container">
+            <button class="btn-next" id="nextBtn" onclick="nextQuestion()">Next Question</button>
+            <button class="btn-reset" id="resetBtn" onclick="resetQuiz()">Start Over</button>
+            <button class="leaderboard-btn" id="leaderboardBtn" onclick="toggleLeaderboard()" style="display: none;">View Leaderboard</button>
+        </div>
+    </div>
+
+    <script>
+        // Cookie management functions
+        function setCookie(name, value, days = 365) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + date.toUTCString();
+            document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const cookies = document.cookie.split(';');
+            for(let i = 0; i < cookies.length; i++) {
+                let cookie = cookies[i].trim();
+                if (cookie.indexOf(nameEQ) === 0) {
+                    return decodeURIComponent(cookie.substring(nameEQ.length));
+                }
+            }
+            return null;
+        }
+
+        function saveScore(name, score, total) {
+            const scores = JSON.parse(getCookie('kpriet_scores') || '[]');
+            const timestamp = new Date().toLocaleString();
+
+            scores.push({
+                name: name || 'Anonymous',
+                score: score,
+                total: total,
+                percentage: Math.round((score / total) * 100),
+                timestamp: timestamp
+            });
+
+            // Keep only last 50 scores
+            if (scores.length > 50) {
+                scores.shift();
+            }
+
+            setCookie('kpriet_scores', JSON.stringify(scores));
+        }
+
+        function getScores() {
+            return JSON.parse(getCookie('kpriet_scores') || '[]');
+        }
+
+        function updateLeaderboard() {
+            const scores = getScores();
+            const sorted = scores.sort((a, b) => b.score - a.score);
+            const leaderboardList = document.getElementById('leaderboardList');
+
+            leaderboardList.innerHTML = '';
+
+            if (sorted.length === 0) {
+                leaderboardList.innerHTML = '<li style="text-align: center; color: #999; border: none;">No scores yet</li>';
+                return;
+            }
+
+            sorted.forEach((entry, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div>
+                        <span class="rank">#${index + 1}</span>
+                        <div class="name-info">
+                            <strong>${entry.name}</strong>
+                            <small>${entry.timestamp}</small>
+                        </div>
+                    </div>
+                    <span class="score-badge">${entry.score}/${entry.total}</span>
+                `;
+                leaderboardList.appendChild(li);
+            });
+        }
+
+        function toggleLeaderboard() {
+            const leaderboard = document.getElementById('leaderboard');
+            updateLeaderboard();
+            leaderboard.classList.toggle('show');
+        }
+
+        const quizData = [
+            {
+                id: 1,
+                question: "What is the primary goal of prompt engineering?",
+                options: [
+                    "To train language models from scratch",
+                    "To develop and optimize prompts for better AI model responses",
+                    "To replace traditional programming languages",
+                    "To increase the number of parameters in a model"
+                ],
+                correctAnswer: 1,
+                explanation: "Prompt engineering focuses on crafting better prompts to get improved responses from existing models."
+            },
+            {
+                id: 2,
+                question: "Which of the following was a key innovation in NLP before the introduction of transformers?",
+                options: [
+                    "Multi-head attention",
+                    "Recurrent Neural Networks (RNNs)",
+                    "In-context learning",
+                    "GPT-4"
+                ],
+                correctAnswer: 1,
+                explanation: "RNNs were a major breakthrough in NLP before transformers became the dominant architecture."
+            },
+            {
+                id: 3,
+                question: "What does the \"temperature\" parameter in language models control?",
+                options: [
+                    "The number of words generated",
+                    "The randomness of the model's responses",
+                    "The maximum number of tokens in output",
+                    "The accuracy of responses"
+                ],
+                correctAnswer: 1,
+                explanation: "Temperature controls randomness: 0 = deterministic, higher values = more creative/random."
+            },
+            {
+                id: 4,
+                question: "What is a \"zero-shot\" prompt?",
+                options: [
+                    "A prompt with multiple examples for the model to learn from",
+                    "A prompt with no specific examples or prior context",
+                    "A prompt designed to generate images",
+                    "A prompt that only allows one-word answers"
+                ],
+                correctAnswer: 1,
+                explanation: "Zero-shot means asking the model to do something without any examples or prior demonstrations."
+            },
+            {
+                id: 5,
+                question: "Which of the following is NOT a type of prompt engineering technique?",
+                options: [
+                    "Chain-of-thought prompting",
+                    "Few-shot prompting",
+                    "Model pruning",
+                    "Self-consistency prompting"
+                ],
+                correctAnswer: 2,
+                explanation: "Model pruning is a model optimization technique, not a prompting technique."
+            },
+            {
+                id: 6,
+                question: "What does \"in-context learning\" involve?",
+                options: [
+                    "Fine-tuning a model on a specific dataset",
+                    "Providing few-shot examples to influence the model's response",
+                    "Using reinforcement learning for model training",
+                    "Reducing the number of tokens in a prompt"
+                ],
+                correctAnswer: 1,
+                explanation: "In-context learning uses examples within the prompt to teach the model patterns."
+            },
+            {
+                id: 7,
+                question: "What is the purpose of a system prompt in AI models?",
+                options: [
+                    "To define the behavior and role of the language model",
+                    "To reduce the size of the model parameters",
+                    "To improve training data quality",
+                    "To ensure the AI model only generates factual information"
+                ],
+                correctAnswer: 0,
+                explanation: "System prompts set the instructions and personality for how the model should behave."
+            },
+            {
+                id: 8,
+                question: "Which of the following is a key characteristic of the Granite model family?",
+                options: [
+                    "It only works with English text",
+                    "It uses a decoder-only transformer architecture",
+                    "It requires GPU acceleration to run",
+                    "It cannot be served locally"
+                ],
+                correctAnswer: 1,
+                explanation: "Granite is a decoder-only model, similar to other modern LLMs like GPT."
+            },
+            {
+                id: 9,
+                question: "What is the main advantage of \"Tree of Thoughts\" prompting?",
+                options: [
+                    "It forces the model to generate only one correct answer",
+                    "It enables reasoning through multiple possibilities at each step",
+                    "It makes models respond instantly without processing",
+                    "It reduces the need for prompt engineering"
+                ],
+                correctAnswer: 1,
+                explanation: "Tree of Thoughts allows exploring different reasoning paths, improving complex problem solving."
+            },
+            {
+                id: 10,
+                question: "What is the main disadvantage of prompt engineering?",
+                options: [
+                    "It is a deterministic process",
+                    "It guarantees consistent outputs",
+                    "It involves trial and error",
+                    "It eliminates biases in AI models"
+                ],
+                correctAnswer: 2,
+                explanation: "Prompt engineering requires experimentation and iteration - there's no guaranteed formula."
+            },
+            {
+                id: 11,
+                question: "What is the primary purpose of providing context in a RAG prompt?",
+                options: [
+                    "To increase the number of tokens processed",
+                    "To reduce hallucinations and improve accuracy",
+                    "To make the model respond faster",
+                    "To train the model on new data"
+                ],
+                correctAnswer: 1,
+                explanation: "RAG context ensures the model answers based on provided information, reducing made-up information."
+            },
+            {
+                id: 12,
+                question: "If you want the model to always give the same response for the same prompt, what temperature value should you use?",
+                options: [
+                    "1.0 or higher",
+                    "0.5",
+                    "0 or close to 0",
+                    "Temperature doesn't affect consistency"
+                ],
+                correctAnswer: 2,
+                explanation: "Temperature at 0 makes the model deterministic, always choosing the most likely token."
+            },
+            {
+                id: 13,
+                question: "What is the advantage of using a system prompt that defines a specific role or persona for the model?",
+                options: [
+                    "It reduces the model size",
+                    "It influences the tone and style of responses",
+                    "It guarantees factually correct answers",
+                    "It speeds up inference"
+                ],
+                correctAnswer: 1,
+                explanation: "System prompts shape how the model communicates and the persona it adopts in responses."
+            },
+            {
+                id: 14,
+                question: "When should you explicitly specify the output format in your prompt?",
+                options: [
+                    "Always, to be safe",
+                    "Only when you need to parse the response programmatically",
+                    "Never, models understand all formats automatically",
+                    "Only for long responses"
+                ],
+                correctAnswer: 1,
+                explanation: "Specify format when you'll process the response automatically (e.g., JSON parsing in code)."
+            },
+            {
+                id: 15,
+                question: "Is performance of in-context learning independent of size of the model (number of parameters) and number of examples used?",
+                options: [
+                    "No",
+                    "Yes"
+                ],
+                correctAnswer: 0,
+                explanation: "Performance depends on both model size and number of examples - they're not independent."
+            },
+            {
+                id: 16,
+                question: "Does performance of model while using CoT improve with increase in model size (number of parameters)?",
+                options: [
+                    "No",
+                    "Yes"
+                ],
+                correctAnswer: 1,
+                explanation: "Chain-of-thought benefits significantly from larger models with more reasoning capacity."
+            },
+            {
+                id: 17,
+                question: "Which technique is closer to signalling the model to generate a reason before answering?",
+                options: [
+                    "Few Shot Prompting",
+                    "Chain of Thought (CoT)",
+                    "Single Shot Prompting",
+                    "Zero Shot Prompting"
+                ],
+                correctAnswer: 1,
+                explanation: "CoT explicitly asks the model to show step-by-step reasoning before providing the answer."
+            },
+            {
+                id: 18,
+                question: "Can we use an encoder as part of finding relevant documents related to the user query in a RAG pipeline?",
+                options: [
+                    "No",
+                    "Yes"
+                ],
+                correctAnswer: 1,
+                explanation: "Encoders are commonly used in RAG to embed queries and documents for semantic search."
+            },
+            {
+                id: 19,
+                question: "Can ollama be combined with other tools like langchain?",
+                options: [
+                    "Yes",
+                    "No"
+                ],
+                correctAnswer: 0,
+                explanation: "Ollama integrates well with frameworks like LangChain for building LLM applications."
+            },
+            {
+                id: 20,
+                question: "You're building a chatbot for your company's internal documents. Which technique would be most appropriate?",
+                options: [
+                    "Zero-shot prompting",
+                    "Chain-of-thought prompting",
+                    "Retrieval-Augmented Generation (RAG)",
+                    "Model training from scratch"
+                ],
+                correctAnswer: 2,
+                explanation: "RAG is ideal for company documents as it ensures the chatbot answers based on actual company data."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = new Set();
+        let participantName = '';
+
+        function initQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            answered = new Set();
+            participantName = document.getElementById('participantName').value.trim() || 'Anonymous';
+
+            document.getElementById('nameInput').style.display = 'none';
+            document.getElementById('leaderboardBtn').style.display = 'none';
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const question = quizData[currentQuestion];
+            const progress = ((currentQuestion + 1) / quizData.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+
+            let html = `
+                <div class="question-container">
+                    <div class="part-indicator">Question ${currentQuestion + 1}/${quizData.length}</div>
+                    <div class="question-number">Question ${currentQuestion + 1}</div>
+                    <div class="question-text">${question.question}</div>
+                    <div class="options">
+            `;
+
+            question.options.forEach((option, index) => {
+                const isAnswered = answered.has(currentQuestion);
+                const isCorrect = index === question.correctAnswer;
+                const selectedValue = document.querySelector(`input[name="option"]:checked`)?.value;
+                const isSelected = selectedValue == index;
+
+                let className = 'option';
+                if (isAnswered) {
+                    className += isCorrect ? ' correct' : (isSelected ? ' incorrect' : '');
+                }
+
+                html += `
+                    <label class="${className}">
+                        <input type="radio" name="option" value="${index}" onchange="selectOption(${index})"
+                            ${isAnswered ? 'disabled' : ''}>
+                        ${String.fromCharCode(65 + index)}) ${option}
+                    </label>
+                `;
+            });
+
+            html += `</div>`;
+
+            if (answered.has(currentQuestion)) {
+                const isCorrect = quizData[currentQuestion].correctAnswer ===
+                    parseInt(document.querySelector(`input[name="option"]:checked`).value);
+                html += `
+                    <div class="feedback show ${isCorrect ? 'correct' : 'incorrect'}">
+                        <strong>${isCorrect ? '✓ Correct!' : '✗ Incorrect'}</strong>
+                        <p>${quizData[currentQuestion].explanation}</p>
+                    </div>
+                `;
+            }
+
+            html += `</div>`;
+
+            document.getElementById('quizContent').innerHTML = html;
+            document.getElementById('nextBtn').disabled = !answered.has(currentQuestion);
+            document.getElementById('stats').classList.remove('show');
+        }
+
+        function selectOption(index) {
+            if (!answered.has(currentQuestion)) {
+                answered.add(currentQuestion);
+                if (index === quizData[currentQuestion].correctAnswer) {
+                    score++;
+                }
+                showQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < quizData.length - 1) {
+                currentQuestion++;
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('quizContent').innerHTML = '';
+            const percentage = Math.round((score / quizData.length) * 100);
+
+            let message = '';
+            if (percentage === 100) {
+                message = "Perfect score! You're an LLM expert! 🌟";
+            } else if (percentage >= 80) {
+                message = "Excellent! You have a strong understanding of LLMs! 🎯";
+            } else if (percentage >= 60) {
+                message = "Good job! Keep learning about prompt engineering! 📚";
+            } else if (percentage >= 40) {
+                message = "Nice effort! Review the material and try again! 💪";
+            } else {
+                message = "Keep learning! This is complex material! 🚀";
+            }
+
+            // Save score to cookies
+            saveScore(participantName, score, quizData.length);
+
+            document.getElementById('finalScore').textContent = `${score}/${quizData.length}`;
+            document.getElementById('scoreText').innerHTML = `
+                <div style="font-size: 1.3em; margin-bottom: 20px;">${percentage}% - ${message}</div>
+                <div style="font-size: 0.95em; color: #666;">
+                    Participant: <strong>${participantName}</strong>
+                </div>
+            `;
+            document.getElementById('stats').classList.add('show');
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('leaderboardBtn').style.display = 'inline-block';
+        }
+
+        function resetQuiz() {
+            document.getElementById('nameInput').style.display = 'block';
+            document.getElementById('nextBtn').style.display = 'inline-block';
+            document.getElementById('leaderboardBtn').style.display = 'none';
+            document.getElementById('leaderboard').classList.remove('show');
+            document.getElementById('participantName').value = '';
+            initQuiz();
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            document.getElementById('nextBtn').disabled = true;
+
+            // Check if there are any saved scores
+            const scores = getScores();
+            if (scores.length > 0) {
+                document.getElementById('leaderboardBtn').style.display = 'inline-block';
+            }
+        });
+
+        // Enable "Start Over" with Enter key from name input
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('participantName').addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    initQuiz();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
