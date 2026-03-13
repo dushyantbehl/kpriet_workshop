@@ -7,6 +7,7 @@ Before we start, make sure you have Ollama installed and running:
 ```bash
 ollama --help
 ollama pull granite3.1-dense:2b
+ollama run granite3.1-dense:2b
 ```
 
 To test the model is running, try:
@@ -29,6 +30,14 @@ curl -X POST http://localhost:11434/api/generate \
 ```
 
 **Using Python:**
+
+Install requests if you don't have already
+
+```bash
+pip install requests 
+```
+
+
 ```python
 import requests
 import json
